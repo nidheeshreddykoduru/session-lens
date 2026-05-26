@@ -1,0 +1,5 @@
+{
+  "username": "admin",
+  "password": "sessionlens123",
+  "secret_key": "change-me-before-deploying"
+}

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Snippet — {{ project.name }}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f7f7f8; color: #111; }
+    header { background: #fff; border-bottom: 1px solid #e5e5e5; padding: 18px 40px; display: flex; align-items: center; gap: 16px; }
+    header a { color: #888; font-size: 13px; text-decoration: none; }
+    header a:hover { color: #111; }
+    header span.sep { color: #ddd; }
+    header h1 { font-size: 17px; font-weight: 600; }
+    main { max-width: 720px; margin: 40px auto; padding: 0 20px; }
+    h2 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+    p { font-size: 14px; color: #555; margin-bottom: 20px; line-height: 1.6; }
+    .code-block { position: relative; background: #1e1e1e; color: #d4d4d4; border-radius: 8px; padding: 20px 24px; font-family: monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-break: break-all; margin-bottom: 12px; }
+    .copy-btn { position: absolute; top: 12px; right: 12px; background: #333; color: #ccc; border: none; border-radius: 4px; padding: 4px 10px; font-size: 11px; cursor: pointer; }
+    .copy-btn:hover { background: #444; color: #fff; }
+    .copied { color: #4ade80 !important; }
+    .note { font-size: 12px; color: #999; margin-top: 6px; }
+    .back { display: inline-block; margin-top: 32px; font-size: 13px; color: #2563eb; text-decoration: none; }
+    .back:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/dashboard">← Dashboard</a>
+    <span class="sep">|</span>
+    <a href="/project/{{ project.id }}">{{ project.name }}</a>
+    <span class="sep">|</span>
+    <h1>Embed Snippet</h1>
+  </header>
+  <main>
+    <h2>Add this to any page</h2>
+    <p>Paste the script tag below into the <code>&lt;head&gt;</code> or end of <code>&lt;body&gt;</code> of any HTML page. Sessions will appear automatically under <strong>{{ project.name }}</strong>.</p>
+
+    <div class="code-block" id="snippet">{{ snippet_code }}<button class="copy-btn" onclick="copySnippet()">Copy</button></div>
+    <p class="note">Server: <strong>{{ server_url }}</strong> &mdash; update this if you move Session Lens to a different host.</p>
+
+    <a class="back" href="/project/{{ project.id }}">← Back to {{ project.name }}</a>
+  </main>
+
+  <script>
+    function copySnippet() {
+      var text = document.getElementById('snippet').innerText.replace('Copy', '').trim();
+      navigator.clipboard.writeText(text).then(function() {
+        var btn = document.querySelector('.copy-btn');
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(function() { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>

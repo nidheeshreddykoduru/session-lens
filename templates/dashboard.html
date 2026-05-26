@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Session Lens — Dashboard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f7f7f8; color: #111; }
+    header { background: #fff; border-bottom: 1px solid #e5e5e5; padding: 18px 40px; display: flex; align-items: center; justify-content: space-between; }
+    header h1 { font-size: 17px; font-weight: 600; }
+    main { max-width: 860px; margin: 40px auto; padding: 0 20px; }
+    .new-project { background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; padding: 20px 24px; margin-bottom: 32px; display: flex; gap: 10px; align-items: center; }
+    .new-project input { flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; outline: none; }
+    .new-project input:focus { border-color: #2563eb; }
+    .new-project button { padding: 8px 18px; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; }
+    .new-project button:hover { background: #1d4ed8; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.07); }
+    thead th { text-align: left; padding: 11px 20px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #999; border-bottom: 1px solid #eee; }
+    tbody tr { border-bottom: 1px solid #f2f2f2; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody td { padding: 14px 20px; font-size: 14px; }
+    .name { font-weight: 500; }
+    .badge { display: inline-block; background: #f0f0f0; color: #555; border-radius: 4px; padding: 2px 8px; font-size: 12px; }
+    .actions { display: flex; gap: 8px; justify-content: flex-end; }
+    .btn { padding: 5px 12px; border-radius: 5px; font-size: 12px; cursor: pointer; text-decoration: none; border: 1px solid #ddd; color: #333; background: #fff; }
+    .btn:hover { background: #f5f5f5; }
+    .btn-primary { background: #2563eb; color: #fff; border-color: #2563eb; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .empty { text-align: center; padding: 60px 20px; color: #aaa; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Session Lens</h1>
+    <a href="/logout" style="font-size:13px; color:#888; text-decoration:none;">Sign out</a>
+  </header>
+  <main>
+    <form class="new-project" action="/projects/new" method="POST">
+      <input type="text" name="name" placeholder="New project name…" required autofocus>
+      <button type="submit">Create Project</button>
+    </form>
+
+    {% if projects %}
+    <table>
+      <thead>
+        <tr>
+          <th>Project</th>
+          <th>Sessions</th>
+          <th>Created</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in projects %}
+        <tr>
+          <td class="name">{{ p.name }}</td>
+          <td><span class="badge">{{ p.session_count }} session{{ 's' if p.session_count != 1 else '' }}</span></td>
+          <td style="color:#888; font-size:13px;">{{ p.created_at[:10] }}</td>
+          <td>
+            <div class="actions">
+              <a class="btn" href="/snippet/{{ p.id }}">Get Snippet</a>
+              <a class="btn btn-primary" href="/project/{{ p.id }}">View Sessions →</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty">No projects yet. Create one above.</div>
+    {% endif %}
+  </main>
+</body>
+</html>
