@@ -80,3 +80,8 @@ A session marked with ⚠ means a JavaScript error occurred during that visit. U
 | rrweb | Records DOM changes, clicks, and mouse movement in the browser |
 | Vanilla JS | Powers the dashboard and replay UI — no frameworks |
 | JSON files | Stores sessions and projects on disk — no database needed |
+
+---
+
+Pls star if ur using it and like it 
+
