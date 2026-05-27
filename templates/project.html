@@ -2,67 +2,282 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ project.name }} — Session Lens</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f7f7f8; color: #111; }
-    header { background: #fff; border-bottom: 1px solid #e5e5e5; padding: 18px 40px; display: flex; align-items: center; gap: 16px; }
-    header a { color: #888; font-size: 13px; text-decoration: none; }
-    header a:hover { color: #111; }
-    header span.sep { color: #ddd; }
-    header h1 { font-size: 17px; font-weight: 600; }
-    .subtext { font-size: 13px; color: #888; margin-left: auto; }
-    main { max-width: 860px; margin: 40px auto; padding: 0 20px; }
-    .toolbar { display: flex; justify-content: flex-end; margin-bottom: 16px; }
-    .btn { padding: 7px 14px; border-radius: 6px; font-size: 13px; cursor: pointer; text-decoration: none; border: 1px solid #ddd; color: #333; background: #fff; }
-    .btn:hover { background: #f5f5f5; }
-    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.07); }
-    thead th { text-align: left; padding: 11px 20px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #999; border-bottom: 1px solid #eee; }
-    tbody tr { border-bottom: 1px solid #f2f2f2; cursor: pointer; transition: background 0.1s; }
-    tbody tr:last-child { border-bottom: none; }
-    tbody tr:hover { background: #f5f8ff; }
-    tbody td { padding: 14px 20px; font-size: 14px; }
-    .sid { font-family: monospace; font-size: 13px; color: #2563eb; }
-    .badge { display: inline-block; background: #f0f0f0; color: #555; border-radius: 4px; padding: 2px 8px; font-size: 12px; }
-    .empty { text-align: center; padding: 60px 20px; color: #aaa; font-size: 14px; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #F8FAFC; color: #0F172A; min-height: 100vh; }
+
+    .header {
+      background: #fff;
+      border-bottom: 1px solid #E2E8F0;
+      padding: 0 32px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #64748B;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      transition: color 0.15s;
+    }
+    .back-link:hover { color: #0F172A; }
+    .divider { color: #E2E8F0; font-size: 18px; }
+    .header-title { font-size: 15px; font-weight: 600; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; font-family: 'Inter', sans-serif; cursor: pointer; text-decoration: none; border: none; transition: all 0.15s; }
+    .btn-outline { background: #fff; color: #0F172A; border: 1px solid #E2E8F0; }
+    .btn-outline:hover { background: #F8FAFC; }
+
+    main { max-width: 900px; margin: 0 auto; padding: 40px 32px; }
+
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .section-title { font-size: 18px; font-weight: 600; }
+    .session-count { font-size: 13px; color: #64748B; }
+
+    .sessions-table {
+      background: #fff;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .table-head {
+      display: grid;
+      grid-template-columns: 1fr 120px 180px 40px;
+      padding: 10px 20px;
+      border-bottom: 1px solid #E2E8F0;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #94A3B8;
+    }
+    .session-row {
+      display: grid;
+      grid-template-columns: 1fr 120px 180px 40px;
+      padding: 14px 20px;
+      border-bottom: 1px solid #F1F5F9;
+      cursor: pointer;
+      transition: background 0.1s;
+      text-decoration: none;
+      color: inherit;
+      align-items: center;
+    }
+    .session-row:last-child { border-bottom: none; }
+    .session-row:hover { background: #F8FAFC; }
+    .session-id { font-family: 'Menlo', 'Monaco', monospace; font-size: 12px; color: #10B981; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      background: #F1F5F9;
+      color: #475569;
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .timestamp { font-size: 13px; color: #64748B; }
+    .warn { font-size: 16px; }
+
+    .empty {
+      text-align: center;
+      padding: 80px 20px;
+      color: #94A3B8;
+    }
+    .empty-icon { font-size: 36px; margin-bottom: 12px; }
+    .empty-title { font-size: 15px; font-weight: 500; color: #64748B; margin-bottom: 6px; }
+    .empty-sub { font-size: 13px; }
+
+    /* Snippet modal */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,0.5);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: #fff;
+      border-radius: 12px;
+      padding: 32px;
+      width: 100%;
+      max-width: 520px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    }
+    .modal-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
+    .modal-title { font-size: 16px; font-weight: 600; }
+    .modal-close { background: none; border: none; color: #94A3B8; cursor: pointer; font-size: 20px; line-height: 1; padding: 0; }
+    .modal-close:hover { color: #0F172A; }
+    .code-wrap { position: relative; margin-bottom: 12px; }
+    .code-block {
+      background: #0F172A;
+      color: #E2E8F0;
+      border-radius: 8px;
+      padding: 16px;
+      font-family: 'Menlo', 'Monaco', monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #1E293B;
+      color: #94A3B8;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .copy-btn:hover { background: #334155; color: #fff; }
+    .copy-btn.copied { color: #10B981; border-color: #10B981; }
+    .code-note { font-size: 12px; color: #94A3B8; }
+
+    @media (max-width: 600px) {
+      main { padding: 24px 16px; }
+      .header { padding: 0 16px; }
+      .table-head, .session-row { grid-template-columns: 1fr 100px 40px; }
+      .table-head > *:nth-child(2), .session-row > *:nth-child(2) { display: none; }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <a href="/dashboard">← Dashboard</a>
-    <span class="sep">|</span>
-    <h1>{{ project.name }}</h1>
-    <span class="subtext">{{ project.id }}</span>
+  <header class="header">
+    <div class="header-left">
+      <a href="/dashboard" class="back-link">← Dashboard</a>
+      <span class="divider">|</span>
+      <span class="header-title">{{ project.name }}</span>
+    </div>
+    <button class="btn btn-outline" onclick="openSnippet()">Get Snippet</button>
   </header>
+
   <main>
-    <div class="toolbar">
-      <a class="btn" href="/snippet/{{ project.id }}">Get Snippet</a>
+    <div class="section-header">
+      <div class="section-title">Sessions</div>
+      <div class="session-count">{{ sessions|length }} recorded</div>
     </div>
 
     {% if sessions %}
-    <table>
-      <thead>
-        <tr>
-          <th>Session ID</th>
-          <th>Events</th>
-          <th>Recorded At</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for s in sessions %}
-        <tr onclick="location.href='/replay/{{ project.id }}/{{ s.id }}'">
-          <td><span class="sid">{{ s.id }}</span></td>
-          <td><span class="badge">{{ s.events }} events</span></td>
-          <td style="color:#888; font-size:13px;">{{ s.recorded_at }}</td>
-          <td style="text-align:right; color:#2563eb; font-size:13px;">Watch →</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <div class="sessions-table">
+      <div class="table-head">
+        <div>Session ID</div>
+        <div>Events</div>
+        <div>Recorded</div>
+        <div></div>
+      </div>
+      {% for s in sessions %}
+      <a class="session-row" href="/replay/{{ project.id }}/{{ s.id }}">
+        <div class="session-id">{{ s.id }}</div>
+        <div><span class="badge">{{ s.events }}</span></div>
+        <div class="timestamp">{{ s.recorded_at }}</div>
+        <div class="warn">{% if s.has_errors %}<span style="color:#EF4444;">⚠</span>{% endif %}</div>
+      </a>
+      {% endfor %}
+    </div>
     {% else %}
-    <div class="empty">No sessions yet. Paste the snippet into any page to start recording.</div>
+    <div class="empty">
+      <div class="empty-icon">📭</div>
+      <div class="empty-title">No sessions yet</div>
+      <div class="empty-sub">Paste the snippet into any page to start recording</div>
+    </div>
     {% endif %}
   </main>
+
+  <!-- Snippet modal -->
+  <div class="modal-backdrop" id="snippet-modal" onclick="closeModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Embed Snippet</div>
+        </div>
+        <button class="modal-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="code-wrap">
+        <pre class="code-block" id="snippet-code"></pre>
+        <button class="copy-btn" id="copy-btn" onclick="copySnippet()">Copy</button>
+      </div>
+      <div class="code-note">Paste inside the <code>&lt;body&gt;</code> of any page. Sessions appear within 5 seconds.</div>
+    </div>
+  </div>
+
+  <script>
+    var PROJECT_ID = '{{ project.id }}';
+
+    function buildSnippet() {
+      var origin = window.location.origin;
+      var lines = [
+        '\x3cscript\x3e',
+        '(function() {',
+        "  var s = document.createElement('script');",
+        "  s.src = 'https://cdn.jsdelivr.net/npm/rrweb@1.1.3/dist/rrweb.min.js';",
+        "  s.onload = function() {",
+        "    var SERVER = '" + origin + "';",
+        "    var PROJECT_ID = '" + PROJECT_ID + "';",
+        "    var SESSION_ID = 'sess_' + Math.random().toString(36).slice(2, 10);",
+        "    var buf = [];",
+        "    rrweb.record({ emit: function(e) { buf.push(e); } });",
+        "    window.onerror = function(m,s,l) { buf.push({type:6,data:{tag:'console',payload:{level:'error',trace:[m+' '+s+':'+l]}},timestamp:Date.now()}); };",
+        "    window.addEventListener('unhandledrejection',function(e){buf.push({type:6,data:{tag:'console',payload:{level:'error',trace:[String(e.reason)]}},timestamp:Date.now()});});",
+        "    function flush() {",
+        "      if (!buf.length) return;",
+        "      var batch = buf.splice(0);",
+        "      fetch(SERVER + '/record', {",
+        "        method: 'POST',",
+        "        headers: { 'Content-Type': 'application/json' },",
+        "        body: JSON.stringify({ projectId: PROJECT_ID, sessionId: SESSION_ID, events: batch })",
+        "      }).catch(function() { buf.unshift.apply(buf, batch); });",
+        "    }",
+        "    setInterval(flush, 5000);",
+        "    window.addEventListener('beforeunload', flush);",
+        "  };",
+        "  document.head.appendChild(s);",
+        "})();",
+        '\x3c/script\x3e'
+      ];
+      return lines.join('\n');
+    }
+
+    function openSnippet() {
+      document.getElementById('snippet-code').textContent = buildSnippet();
+      var btn = document.getElementById('copy-btn');
+      btn.textContent = 'Copy';
+      btn.classList.remove('copied');
+      document.getElementById('snippet-modal').classList.add('open');
+    }
+
+    function closeModal() { document.getElementById('snippet-modal').classList.remove('open'); }
+
+    function copySnippet() {
+      navigator.clipboard.writeText(document.getElementById('snippet-code').textContent).then(function() {
+        var btn = document.getElementById('copy-btn');
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(function() { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+      });
+    }
+
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(); });
+  </script>
 </body>
 </html>

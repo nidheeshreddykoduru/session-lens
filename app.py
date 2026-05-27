@@ -6,15 +6,9 @@ from functools import wraps
 from flask import Flask, request, jsonify, render_template, redirect, url_for, session
 from flask_cors import CORS
 
-CONFIG_FILE = "config.json"
 USERS_FILE = "users.json"
 SESSIONS_DIR = "sessions"
 PROJECTS_FILE = "projects.json"
-
-
-def load_config():
-    with open(CONFIG_FILE, "r") as f:
-        return json.load(f)
 
 
 def load_users():
@@ -29,14 +23,48 @@ def save_users(users):
         json.dump(users, f, indent=2)
 
 
-config = load_config()
+def load_projects():
+    if not os.path.exists(PROJECTS_FILE):
+        return []
+    with open(PROJECTS_FILE, "r") as f:
+        return json.load(f)
+
+
+def save_projects(projects):
+    with open(PROJECTS_FILE, "w") as f:
+        json.dump(projects, f, indent=2)
+
+
+def user_projects():
+    owner = session["username"]
+    return [p for p in load_projects() if p.get("owner") == owner]
+
+
+def owned_project(project_id):
+    return next((p for p in user_projects() if p["id"] == project_id), None)
+
+
+def count_sessions(project_id):
+    path = os.path.join(SESSIONS_DIR, project_id)
+    if not os.path.isdir(path):
+        return 0
+    return len([f for f in os.listdir(path) if f.endswith(".json")])
+
+
+def session_has_errors(events):
+    for e in events:
+        if e.get("type") == 6:
+            payload = e.get("data", {}).get("payload", {})
+            if isinstance(payload, dict) and payload.get("level") == "error":
+                return True
+    return False
+
 
 app = Flask(__name__)
-app.secret_key = config["secret_key"]
+app.secret_key = os.environ.get("SECRET_KEY", "change-me-before-deploying")
 CORS(app)
 os.makedirs(SESSIONS_DIR, exist_ok=True)
 
-# Ensure users.json exists
 if not os.path.exists(USERS_FILE):
     save_users([])
 
@@ -71,16 +99,13 @@ def register():
     username = request.form.get("username", "").strip()
     password = request.form.get("password", "")
     confirm = request.form.get("confirm", "")
-
     if not username or not password:
         return jsonify({"error": "Username and password are required."}), 400
     if password != confirm:
         return jsonify({"error": "Passwords do not match."}), 400
-
     users = load_users()
     if any(u["username"] == username for u in users):
         return jsonify({"error": "Username already taken."}), 409
-
     users.append({"username": username, "password": password, "created_at": datetime.now().isoformat()})
     save_users(users)
     session["username"] = username
@@ -93,68 +118,7 @@ def logout():
     return redirect(url_for("login"))
 
 
-# ── Public ────────────────────────────────────────────────────────────────────
-
-@app.route("/")
-def index():
-    return render_template("test_page.html")
-
-
-@app.route("/test")
-def test_page():
-    return """<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Test — Session Lens</title>
-  <style>
-    body { font-family: sans-serif; max-width: 600px; margin: 60px auto; padding: 0 20px; }
-    button { margin: 8px; padding: 10px 20px; font-size: 14px; cursor: pointer; }
-    input { margin: 8px; padding: 8px; font-size: 14px; width: 220px; }
-    #out { margin-top: 16px; font-size: 13px; color: #555; font-family: monospace; }
-  </style>
-</head>
-<body>
-  <h2>Session Lens — Test Page</h2>
-  <p>Click around. Events flush every 5 seconds.</p>
-  <div>
-    <button onclick="document.getElementById('out').textContent='Button A clicked'">Button A</button>
-    <button onclick="document.getElementById('out').textContent='Button B clicked'">Button B</button>
-    <button onclick="document.getElementById('out').textContent=''">Clear</button>
-  </div>
-  <div>
-    <input type="text" placeholder="Type something..." />
-  </div>
-  <div id="out"></div>
-  <script>
-  (function() {
-    var s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/rrweb@1.1.3/dist/rrweb.min.js';
-    s.onload = function() {
-      var SERVER = '';
-      var PROJECT_ID = 'proj_1dae8f1b';
-      var SESSION_ID = 'sess_' + Math.random().toString(36).slice(2, 10);
-      var buf = [];
-      rrweb.record({ emit: function(e) { buf.push(e); } });
-      function flush() {
-        if (!buf.length) return;
-        var batch = buf.splice(0);
-        fetch(SERVER + '/record', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ projectId: PROJECT_ID, sessionId: SESSION_ID, events: batch })
-        }).catch(function() { buf.unshift.apply(buf, batch); });
-      }
-      setInterval(flush, 5000);
-      window.addEventListener('beforeunload', flush);
-      document.getElementById('out').textContent = 'Recording... session: ' + SESSION_ID;
-    };
-    document.head.appendChild(s);
-  })();
-  </script>
-</body>
-</html>"""
-
+# ── Public: recording endpoint ────────────────────────────────────────────────
 
 @app.route("/record", methods=["POST"])
 def record():
@@ -177,41 +141,21 @@ def record():
     if os.path.exists(filepath):
         with open(filepath, "r") as f:
             existing = json.load(f)
-
     existing.extend(events)
-
     with open(filepath, "w") as f:
         json.dump(existing, f)
 
     label = f"project:{project_id} | " if project_id else ""
-    print(f"[{label}session:{session_id}] received {len(events)} events, total {len(existing)}")
+    print(f"[{label}session:{session_id}] +{len(events)} events (total {len(existing)})")
     return jsonify({"sessionId": session_id, "received": len(events), "total": len(existing)})
 
 
-# ── Projects (protected) ──────────────────────────────────────────────────────
+# ── Dashboard ─────────────────────────────────────────────────────────────────
 
-def load_projects():
-    if not os.path.exists(PROJECTS_FILE):
-        return []
-    with open(PROJECTS_FILE, "r") as f:
-        return json.load(f)
-
-
-def save_projects(projects):
-    with open(PROJECTS_FILE, "w") as f:
-        json.dump(projects, f, indent=2)
-
-
-def user_projects():
-    owner = session["username"]
-    return [p for p in load_projects() if p.get("owner") == owner]
-
-
-def count_sessions(project_id):
-    path = os.path.join(SESSIONS_DIR, project_id)
-    if not os.path.isdir(path):
-        return 0
-    return len([f for f in os.listdir(path) if f.endswith(".json")])
+@app.route("/")
+@login_required
+def index():
+    return redirect(url_for("dashboard"))
 
 
 @app.route("/dashboard")
@@ -220,7 +164,7 @@ def dashboard():
     projects = user_projects()
     for p in projects:
         p["session_count"] = count_sessions(p["id"])
-    return render_template("dashboard.html", projects=projects)
+    return render_template("dashboard.html", projects=projects, username=session["username"])
 
 
 @app.route("/projects/new", methods=["POST"])
@@ -241,9 +185,7 @@ def new_project():
     return redirect(url_for("project_view", project_id=project_id))
 
 
-def owned_project(project_id):
-    return next((p for p in user_projects() if p["id"] == project_id), None)
-
+# ── Project ───────────────────────────────────────────────────────────────────
 
 @app.route("/project/<project_id>")
 @login_required
@@ -263,55 +205,23 @@ def project_view(project_id):
                 events = json.load(f)
             first_ts = events[0]["timestamp"] if events else 0
             recorded_at = datetime.fromtimestamp(first_ts / 1000).strftime("%Y-%m-%d %H:%M:%S") if first_ts else "—"
-            sessions.append({"id": sid, "events": len(events), "recorded_at": recorded_at, "ts": first_ts})
+            sessions.append({"id": sid, "events": len(events), "recorded_at": recorded_at, "ts": first_ts, "has_errors": session_has_errors(events)})
     sessions.sort(key=lambda s: s["ts"], reverse=True)
     return render_template("project.html", project=proj, sessions=sessions)
 
 
-@app.route("/snippet/<project_id>")
-@login_required
-def snippet(project_id):
-    proj = owned_project(project_id)
-    if not proj:
-        return "Project not found", 404
-    server_url = request.host_url.rstrip("/")
-    snippet_code = f"""<script>
-(function() {{
-  var s = document.createElement('script');
-  s.src = 'https://cdn.jsdelivr.net/npm/rrweb@1.1.3/dist/rrweb.min.js';
-  s.onload = function() {{
-    var SERVER = '{server_url}';
-    var PROJECT_ID = '{project_id}';
-    var SESSION_ID = 'sess_' + Math.random().toString(36).slice(2, 10);
-    var buf = [];
-    rrweb.record({{ emit: function(e) {{ buf.push(e); }} }});
-    function flush() {{
-      if (!buf.length) return;
-      var batch = buf.splice(0);
-      fetch(SERVER + '/record', {{
-        method: 'POST',
-        headers: {{ 'Content-Type': 'application/json' }},
-        body: JSON.stringify({{ projectId: PROJECT_ID, sessionId: SESSION_ID, events: batch }})
-      }}).catch(function() {{ buf.unshift.apply(buf, batch); }});
-    }}
-    setInterval(flush, 5000);
-    window.addEventListener('beforeunload', flush);
-  }};
-  document.head.appendChild(s);
-}})();
-</script>"""
-    return render_template("snippet.html", project=proj, server_url=server_url, snippet_code=snippet_code)
-
+# ── Replay ────────────────────────────────────────────────────────────────────
 
 @app.route("/replay/<project_id>/<session_id>")
 @login_required
 def replay(project_id, session_id):
-    if not owned_project(project_id):
+    proj = owned_project(project_id)
+    if not proj:
         return "Project not found", 404
     filepath = os.path.join(SESSIONS_DIR, project_id, f"{session_id}.json")
     if not os.path.exists(filepath):
         return "Session not found", 404
-    return render_template("replay.html", project_id=project_id, session_id=session_id)
+    return render_template("replay.html", project=proj, session_id=session_id)
 
 
 @app.route("/sessions/<project_id>/<session_id>")

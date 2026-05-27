@@ -2,73 +2,302 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Session Lens — Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Session Lens</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f7f7f8; color: #111; }
-    header { background: #fff; border-bottom: 1px solid #e5e5e5; padding: 18px 40px; display: flex; align-items: center; justify-content: space-between; }
-    header h1 { font-size: 17px; font-weight: 600; }
-    main { max-width: 860px; margin: 40px auto; padding: 0 20px; }
-    .new-project { background: #fff; border: 1px solid #e5e5e5; border-radius: 8px; padding: 20px 24px; margin-bottom: 32px; display: flex; gap: 10px; align-items: center; }
-    .new-project input { flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; outline: none; }
-    .new-project input:focus { border-color: #2563eb; }
-    .new-project button { padding: 8px 18px; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; }
-    .new-project button:hover { background: #1d4ed8; }
-    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.07); }
-    thead th { text-align: left; padding: 11px 20px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #999; border-bottom: 1px solid #eee; }
-    tbody tr { border-bottom: 1px solid #f2f2f2; }
-    tbody tr:last-child { border-bottom: none; }
-    tbody td { padding: 14px 20px; font-size: 14px; }
-    .name { font-weight: 500; }
-    .badge { display: inline-block; background: #f0f0f0; color: #555; border-radius: 4px; padding: 2px 8px; font-size: 12px; }
-    .actions { display: flex; gap: 8px; justify-content: flex-end; }
-    .btn { padding: 5px 12px; border-radius: 5px; font-size: 12px; cursor: pointer; text-decoration: none; border: 1px solid #ddd; color: #333; background: #fff; }
-    .btn:hover { background: #f5f5f5; }
-    .btn-primary { background: #2563eb; color: #fff; border-color: #2563eb; }
-    .btn-primary:hover { background: #1d4ed8; }
-    .empty { text-align: center; padding: 60px 20px; color: #aaa; font-size: 14px; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #F8FAFC; color: #0F172A; min-height: 100vh; }
+
+    /* Header */
+    .header {
+      background: #fff;
+      border-bottom: 1px solid #E2E8F0;
+      padding: 0 32px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .header-logo { font-size: 16px; font-weight: 600; }
+    .header-actions { display: flex; align-items: center; gap: 12px; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500; font-family: 'Inter', sans-serif; cursor: pointer; text-decoration: none; border: none; transition: all 0.15s; }
+    .btn-primary { background: #10B981; color: #fff; }
+    .btn-primary:hover { background: #059669; }
+    .btn-ghost { background: transparent; color: #64748B; border: 1px solid #E2E8F0; }
+    .btn-ghost:hover { background: #F1F5F9; color: #0F172A; }
+    .btn-outline { background: #fff; color: #0F172A; border: 1px solid #E2E8F0; }
+    .btn-outline:hover { background: #F8FAFC; }
+
+    /* Main */
+    main { max-width: 1100px; margin: 0 auto; padding: 40px 32px; }
+    .page-title { font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+    .page-sub { font-size: 14px; color: #64748B; margin-bottom: 32px; }
+
+    /* Cards grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #E2E8F0;
+      border-radius: 12px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .card-name { font-size: 16px; font-weight: 600; }
+    .card-meta { display: flex; align-items: center; gap: 10px; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      background: #F0FDF4;
+      color: #059669;
+      border: 1px solid #D1FAE5;
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .card-date { font-size: 12px; color: #94A3B8; }
+    .card-actions { display: flex; gap: 8px; margin-top: auto; }
+    .card-actions .btn { flex: 1; justify-content: center; }
+
+    /* Empty state */
+    .empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 80px 20px;
+      color: #94A3B8;
+    }
+    .empty-icon { font-size: 40px; margin-bottom: 12px; }
+    .empty-title { font-size: 16px; font-weight: 500; color: #64748B; margin-bottom: 6px; }
+    .empty-sub { font-size: 14px; margin-bottom: 24px; }
+
+    /* Modal backdrop */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,0.5);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      background: #fff;
+      border-radius: 12px;
+      padding: 32px;
+      width: 100%;
+      max-width: 520px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    }
+    .modal-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; }
+    .modal-title { font-size: 16px; font-weight: 600; }
+    .modal-sub { font-size: 13px; color: #64748B; margin-top: 2px; }
+    .modal-close { background: none; border: none; color: #94A3B8; cursor: pointer; font-size: 20px; line-height: 1; padding: 0; }
+    .modal-close:hover { color: #0F172A; }
+
+    /* Snippet code block */
+    .code-wrap { position: relative; margin-bottom: 12px; }
+    .code-block {
+      background: #0F172A;
+      color: #E2E8F0;
+      border-radius: 8px;
+      padding: 16px;
+      font-family: 'Menlo', 'Monaco', monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #1E293B;
+      color: #94A3B8;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .copy-btn:hover { background: #334155; color: #fff; }
+    .copy-btn.copied { color: #10B981; border-color: #10B981; }
+    .code-note { font-size: 12px; color: #94A3B8; }
+
+    /* New project modal form */
+    .modal label { display: block; font-size: 12px; font-weight: 500; color: #475569; margin-bottom: 6px; }
+    .modal input[type=text] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      color: #0F172A;
+      outline: none;
+      margin-bottom: 16px;
+    }
+    .modal input:focus { border-color: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.1); }
+
+    @media (max-width: 600px) {
+      main { padding: 24px 16px; }
+      .header { padding: 0 16px; }
+      .grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Session Lens</h1>
-    <a href="/logout" style="font-size:13px; color:#888; text-decoration:none;">Sign out</a>
+  <header class="header">
+    <div class="header-logo">Session Lens</div>
+    <div class="header-actions">
+      <button class="btn btn-primary" onclick="openNewProject()">+ New Project</button>
+      <a href="/logout" class="btn btn-ghost">Sign out</a>
+    </div>
   </header>
-  <main>
-    <form class="new-project" action="/projects/new" method="POST">
-      <input type="text" name="name" placeholder="New project name…" required autofocus>
-      <button type="submit">Create Project</button>
-    </form>
 
-    {% if projects %}
-    <table>
-      <thead>
-        <tr>
-          <th>Project</th>
-          <th>Sessions</th>
-          <th>Created</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
+  <main>
+    <div class="page-title">Projects</div>
+    <div class="page-sub">Signed in as <strong>{{ username }}</strong></div>
+
+    <div class="grid">
+      {% if projects %}
         {% for p in projects %}
-        <tr>
-          <td class="name">{{ p.name }}</td>
-          <td><span class="badge">{{ p.session_count }} session{{ 's' if p.session_count != 1 else '' }}</span></td>
-          <td style="color:#888; font-size:13px;">{{ p.created_at[:10] }}</td>
-          <td>
-            <div class="actions">
-              <a class="btn" href="/snippet/{{ p.id }}">Get Snippet</a>
-              <a class="btn btn-primary" href="/project/{{ p.id }}">View Sessions →</a>
-            </div>
-          </td>
-        </tr>
+        <div class="card">
+          <div class="card-name">{{ p.name }}</div>
+          <div class="card-meta">
+            <span class="badge">{{ p.session_count }} session{{ 's' if p.session_count != 1 else '' }}</span>
+            <span class="card-date">{{ p.created_at[:10] }}</span>
+          </div>
+          <div class="card-actions">
+            <a href="/project/{{ p.id }}" class="btn btn-primary">View Sessions</a>
+            <button class="btn btn-outline" onclick="openSnippet('{{ p.id }}', '{{ p.name }}')">Get Snippet</button>
+          </div>
+        </div>
         {% endfor %}
-      </tbody>
-    </table>
-    {% else %}
-    <div class="empty">No projects yet. Create one above.</div>
-    {% endif %}
+      {% else %}
+        <div class="empty">
+          <div class="empty-icon">📹</div>
+          <div class="empty-title">No projects yet</div>
+          <div class="empty-sub">Create a project to get your recording snippet</div>
+          <button class="btn btn-primary" onclick="openNewProject()">+ New Project</button>
+        </div>
+      {% endif %}
+    </div>
   </main>
+
+  <!-- Snippet modal -->
+  <div class="modal-backdrop" id="snippet-modal" onclick="closeModal('snippet-modal')">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <div class="modal-title">Embed Snippet</div>
+          <div class="modal-sub" id="snippet-project-name"></div>
+        </div>
+        <button class="modal-close" onclick="closeModal('snippet-modal')">×</button>
+      </div>
+      <div class="code-wrap">
+        <pre class="code-block" id="snippet-code"></pre>
+        <button class="copy-btn" id="copy-btn" onclick="copySnippet()">Copy</button>
+      </div>
+      <div class="code-note">Paste inside the <code>&lt;body&gt;</code> of any page. Sessions appear within 5 seconds.</div>
+    </div>
+  </div>
+
+  <!-- New Project modal -->
+  <div class="modal-backdrop" id="new-project-modal" onclick="closeModal('new-project-modal')">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title">New Project</div>
+        <button class="modal-close" onclick="closeModal('new-project-modal')">×</button>
+      </div>
+      <form action="/projects/new" method="POST">
+        <label for="proj-name">Project name</label>
+        <input type="text" id="proj-name" name="name" placeholder="e.g. My Website" required autofocus>
+        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Create Project</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    function openModal(id) { document.getElementById(id).classList.add('open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+    function openNewProject() { openModal('new-project-modal'); }
+
+    function buildSnippet(projectId) {
+      var origin = window.location.origin;
+      var lines = [
+        '\x3cscript\x3e',
+        '(function() {',
+        "  var s = document.createElement('script');",
+        "  s.src = 'https://cdn.jsdelivr.net/npm/rrweb@1.1.3/dist/rrweb.min.js';",
+        "  s.onload = function() {",
+        "    var SERVER = '" + origin + "';",
+        "    var PROJECT_ID = '" + projectId + "';",
+        "    var SESSION_ID = 'sess_' + Math.random().toString(36).slice(2, 10);",
+        "    var buf = [];",
+        "    rrweb.record({ emit: function(e) { buf.push(e); } });",
+        "    window.onerror = function(m,s,l) { buf.push({type:6,data:{tag:'console',payload:{level:'error',trace:[m+' '+s+':'+l]}},timestamp:Date.now()}); };",
+        "    window.addEventListener('unhandledrejection',function(e){buf.push({type:6,data:{tag:'console',payload:{level:'error',trace:[String(e.reason)]}},timestamp:Date.now()});});",
+        "    function flush() {",
+        "      if (!buf.length) return;",
+        "      var batch = buf.splice(0);",
+        "      fetch(SERVER + '/record', {",
+        "        method: 'POST',",
+        "        headers: { 'Content-Type': 'application/json' },",
+        "        body: JSON.stringify({ projectId: PROJECT_ID, sessionId: SESSION_ID, events: batch })",
+        "      }).catch(function() { buf.unshift.apply(buf, batch); });",
+        "    }",
+        "    setInterval(flush, 5000);",
+        "    window.addEventListener('beforeunload', flush);",
+        "  };",
+        "  document.head.appendChild(s);",
+        "})();",
+        '\x3c/script\x3e'
+      ];
+      return lines.join('\n');
+    }
+
+    function openSnippet(projectId, projectName) {
+      document.getElementById('snippet-project-name').textContent = projectName;
+      document.getElementById('snippet-code').textContent = buildSnippet(projectId);
+      var btn = document.getElementById('copy-btn');
+      btn.textContent = 'Copy';
+      btn.classList.remove('copied');
+      openModal('snippet-modal');
+    }
+
+    function copySnippet() {
+      var text = document.getElementById('snippet-code').textContent;
+      navigator.clipboard.writeText(text).then(function() {
+        var btn = document.getElementById('copy-btn');
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(function() { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+      });
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closeModal('snippet-modal');
+        closeModal('new-project-modal');
+      }
+    });
+  </script>
 </body>
 </html>

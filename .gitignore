@@ -1,0 +1,11 @@
+config.json
+users.json
+projects.json
+sessions/
+*.pyc
+__pycache__/
+.env
+*.egg-info/
+dist/
+.venv/
+venv/
